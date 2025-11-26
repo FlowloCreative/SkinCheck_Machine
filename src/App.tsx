@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { listRecords, createRecord } from "./api.js";
+import { listRecords, createRecord } from "./api";
 
 export default function App() {
   const [requests, setRequests] = useState([]);
