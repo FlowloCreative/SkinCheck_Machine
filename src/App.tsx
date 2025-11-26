@@ -1,35 +1,52 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Request from "./pages/Request";
-import Auth from "./pages/Auth";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminReview from "./pages/AdminReview";
-import NotFound from "./pages/NotFound";
+import React, { useEffect, useState } from "react";
+import { listRecords, createRecord } from "./api.js";
 
-const queryClient = new QueryClient();
+export default function App() {
+  const [requests, setRequests] = useState([]);
+  const [form, setForm] = useState({});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/request" element={<Request />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/review/:id" element={<AdminReview />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  // Load all requests on mount
+  useEffect(() => {
+    async function loadRequests() {
+      const data = await listRecords("skin_check_requests");
+      setRequests(data);
+    }
+    loadRequests();
+  }, []);
 
-export default App;
+  // Handle form submit
+  async function handleSubmit(e) {
+    e.preventDefault();
+    await createRecord("skin_check_requests", form);
+    // Reload the list
+    const updated = await listRecords("skin_check_requests");
+    setRequests(updated);
+  }
+
+  return (
+    <div>
+      <h2>Skin Check Requests</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          name="requestid"
+          placeholder="Request ID"
+          onChange={e => setForm(f => ({ ...f, requestid: e.target.value }))}
+        />
+        <input
+          name="employeename"
+          placeholder="Employee Name"
+          onChange={e => setForm(f => ({ ...f, employeename: e.target.value }))}
+        />
+        {/* Add more input fields here for department, email, etc. */}
+        <button type="submit">Create Request</button>
+      </form>
+      <ul>
+        {requests.map(r => (
+          <li key={r.id}>
+            {r.requestid} — {r.employeename}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
